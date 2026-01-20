@@ -79,8 +79,8 @@ npm start
 Set these environment variables before running the examples:
 
 ```bash
-AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com/api/projects/your-project
-AZURE_AI_MODEL_DEPLOYMENT_NAME=your-deployment-name
+AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com
+AZURE_AGENT_ID=your-agent-id
 ```
 
 For Azure authentication, ensure you're logged in via Azure CLI:

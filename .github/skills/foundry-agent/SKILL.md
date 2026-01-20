@@ -61,8 +61,8 @@ Configure these environment variables for your application:
 
 ```bash
 # Required
-AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com/api/projects/your-project
-AZURE_AI_MODEL_DEPLOYMENT_NAME=your-deployment-name
+AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com
+AZURE_AGENT_ID=your-agent-id
 
 # For API Key Authentication (if not using DefaultAzureCredential)
 AZURE_AI_API_KEY=your-api-key

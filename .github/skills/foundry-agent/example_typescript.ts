@@ -1,15 +1,18 @@
 /**
  * Microsoft Foundry Agent Integration Example (TypeScript)
  * 
- * This example demonstrates how to call a Microsoft Foundry agent application
- * using REST APIs with proper authentication and error handling.
+ * This example demonstrates a simplified REST API approach for calling
+ * Microsoft Foundry agent applications with proper authentication.
+ * 
+ * Note: This is a conceptual example showing REST API patterns.
+ * For production use with TypeScript, consider using the Azure SDK for JavaScript.
  * 
  * Prerequisites:
  *     npm install @azure/identity
  * 
  * Environment Variables:
  *     AZURE_AI_PROJECT_ENDPOINT: Your Foundry project endpoint
- *     AZURE_AI_MODEL_DEPLOYMENT_NAME: Your agent deployment name
+ *     AZURE_AGENT_ID: Your agent ID
  */
 
 import { DefaultAzureCredential } from '@azure/identity';
@@ -19,7 +22,7 @@ import { DefaultAzureCredential } from '@azure/identity';
  */
 interface FoundryConfig {
     endpoint: string;
-    deploymentName: string;
+    agentId: string;
 }
 
 /**
@@ -57,20 +60,20 @@ interface AgentResponse {
  */
 class FoundryAgentClient {
     private endpoint: string;
-    private deploymentName: string;
+    private agentId: string;
     private credential: DefaultAzureCredential;
     private accessToken: string | null = null;
     private tokenExpiry: Date | null = null;
 
     constructor(config?: Partial<FoundryConfig>) {
         this.endpoint = config?.endpoint || process.env.AZURE_AI_PROJECT_ENDPOINT || '';
-        this.deploymentName = config?.deploymentName || process.env.AZURE_AI_MODEL_DEPLOYMENT_NAME || '';
+        this.agentId = config?.agentId || process.env.AZURE_AGENT_ID || '';
         
         if (!this.endpoint) {
             throw new Error('AZURE_AI_PROJECT_ENDPOINT must be set');
         }
-        if (!this.deploymentName) {
-            throw new Error('AZURE_AI_MODEL_DEPLOYMENT_NAME must be set');
+        if (!this.agentId) {
+            throw new Error('AZURE_AGENT_ID must be set');
         }
         
         this.credential = new DefaultAzureCredential();
@@ -133,7 +136,9 @@ class FoundryAgentClient {
             
             console.log(`\n→ Sending message: ${message}`);
             
-            const url = `${this.endpoint}/agents/${this.deploymentName}/invoke`;
+            // Note: This URL pattern is conceptual. Actual Foundry REST API
+            // endpoints may differ. Refer to Azure AI Foundry documentation.
+            const url = `${this.endpoint}/agents/${this.agentId}/invoke`;
             
             const response = await fetch(url, {
                 method: 'POST',
@@ -186,7 +191,9 @@ class FoundryAgentClient {
             
             console.log(`\n→ Sending message (streaming): ${message}`);
             
-            const url = `${this.endpoint}/agents/${this.deploymentName}/invoke`;
+            // Note: This URL pattern is conceptual. Actual Foundry REST API
+            // endpoints may differ. Refer to Azure AI Foundry documentation.
+            const url = `${this.endpoint}/agents/${this.agentId}/invoke`;
             
             const response = await fetch(url, {
                 method: 'POST',
@@ -372,14 +379,14 @@ async function main(): Promise<void> {
     console.log('='.repeat(60));
     
     // Check environment variables
-    const requiredVars = ['AZURE_AI_PROJECT_ENDPOINT', 'AZURE_AI_MODEL_DEPLOYMENT_NAME'];
+    const requiredVars = ['AZURE_AI_PROJECT_ENDPOINT', 'AZURE_AGENT_ID'];
     const missingVars = requiredVars.filter(varName => !process.env[varName]);
     
     if (missingVars.length > 0) {
         console.error(`\n✗ Error: Missing required environment variables: ${missingVars.join(', ')}`);
         console.error('\nPlease set the following environment variables:');
-        console.error('  AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com/api/projects/your-project');
-        console.error('  AZURE_AI_MODEL_DEPLOYMENT_NAME=your-deployment-name');
+        console.error('  AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com');
+        console.error('  AZURE_AGENT_ID=your-agent-id');
         process.exit(1);
     }
     

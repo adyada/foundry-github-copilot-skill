@@ -85,10 +85,10 @@ Edit the `.env` file and add your values:
 
 ```bash
 # Required: Your Foundry project endpoint
-AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com/api/projects/your-project
+AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com
 
-# Required: Your agent deployment name
-AZURE_AI_MODEL_DEPLOYMENT_NAME=your-agent-name
+# Required: Your agent ID
+AZURE_AGENT_ID=your-agent-id
 ```
 
 ### Step 3: Authenticate with Azure
