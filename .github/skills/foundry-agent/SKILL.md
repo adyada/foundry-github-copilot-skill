@@ -49,7 +49,7 @@ def ask_foundry_agent(prompt: str) -> dict:
         The agent's response as a dictionary
     """
     # Get the Foundry Agent endpoint from environment variables
-    endpoint = os.getenv("FOUNDRY_AGENT_ENDPOINT", "https://<your-foundry-endpoint>/chat")
+    endpoint = os.getenv("FOUNDRY_AGENT_ENDPOINT", "https://YOUR-FOUNDRY-ENDPOINT.azure.com/chat")
     api_key = os.getenv("FOUNDRY_AGENT_API_KEY")
     
     headers = {
@@ -96,7 +96,7 @@ interface FoundryAgentResponse {
 
 async function askFoundryAgent(prompt: string): Promise<FoundryAgentResponse | { error: string }> {
   // Get the Foundry Agent endpoint from environment variables
-  const endpoint = process.env.FOUNDRY_AGENT_ENDPOINT || 'https://<your-foundry-endpoint>/chat';
+  const endpoint = process.env.FOUNDRY_AGENT_ENDPOINT || 'https://YOUR-FOUNDRY-ENDPOINT.azure.com/chat';
   const apiKey = process.env.FOUNDRY_AGENT_API_KEY;
   
   const headers: Record<string, string> = {
@@ -151,7 +151,7 @@ public class FoundryAgentClient
     {
         _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
         _endpoint = Environment.GetEnvironmentVariable("FOUNDRY_AGENT_ENDPOINT") 
-            ?? "https://<your-foundry-endpoint>/chat";
+            ?? "https://YOUR-FOUNDRY-ENDPOINT.azure.com/chat";
         _apiKey = Environment.GetEnvironmentVariable("FOUNDRY_AGENT_API_KEY");
     }
 

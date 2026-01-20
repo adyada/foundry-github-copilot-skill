@@ -29,7 +29,7 @@ class FoundryAgentClient:
         """
         self.endpoint = endpoint or os.getenv(
             "FOUNDRY_AGENT_ENDPOINT",
-            "https://your-foundry-endpoint.azure.com/chat"
+            "https://YOUR-FOUNDRY-ENDPOINT.azure.com/chat"
         )
         self.api_key = api_key or os.getenv("FOUNDRY_AGENT_API_KEY")
         self.session = requests.Session()

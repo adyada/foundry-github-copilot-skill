@@ -40,7 +40,7 @@ class FoundryAgentClient {
   constructor(endpoint?: string, apiKey?: string) {
     this.endpoint = endpoint || 
       process.env.FOUNDRY_AGENT_ENDPOINT || 
-      'https://your-foundry-endpoint.azure.com/chat';
+      'https://YOUR-FOUNDRY-ENDPOINT.azure.com/chat';
     this.apiKey = apiKey || process.env.FOUNDRY_AGENT_API_KEY;
 
     const headers: Record<string, string> = {
