@@ -1,0 +1,11 @@
+# Python dependencies for Microsoft Foundry agent integration
+
+# Core Azure AI packages
+azure-ai-projects>=1.0.0
+azure-identity>=1.15.0
+
+# HTTP client (usually included, but explicit for clarity)
+azure-core>=1.29.0
+
+# Optional: For enhanced logging and debugging
+python-dotenv>=1.0.0

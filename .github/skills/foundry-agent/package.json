@@ -1,0 +1,26 @@
+{
+  "name": "foundry-agent-integration",
+  "version": "1.0.0",
+  "description": "Example TypeScript integration with Microsoft Foundry agents",
+  "main": "example_typescript.ts",
+  "scripts": {
+    "start": "ts-node example_typescript.ts",
+    "build": "tsc example_typescript.ts"
+  },
+  "keywords": [
+    "microsoft-foundry",
+    "ai-agents",
+    "azure",
+    "typescript"
+  ],
+  "author": "GitHub Copilot",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/identity": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  }
+}
