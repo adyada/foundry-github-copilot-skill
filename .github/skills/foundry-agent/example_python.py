@@ -198,12 +198,10 @@ def example_streaming_call():
         for chunk in client.send_message_stream(
             "Explain the benefits of using AI agents in software development."
         ):
-            # Process each chunk
-            if chunk and "delta" in chunk:
-                content = chunk["delta"].get("content", "")
-                if content:
-                    print(content, end="", flush=True)
-                    full_response += content
+            # The generator yields text strings directly
+            if chunk:
+                print(chunk, end="", flush=True)
+                full_response += chunk
         
         print("\n\n✓ Example completed successfully")
         
