@@ -9,13 +9,17 @@ Prerequisites:
 
 Environment Variables:
     AZURE_AI_PROJECT_ENDPOINT: Your Foundry project endpoint
-    AZURE_AI_MODEL_DEPLOYMENT_NAME: Your agent deployment name
+    AZURE_AGENT_ID: Your agent ID (from the Foundry portal)
+    
+Note: This is a simplified example for learning purposes. For production use,
+refer to the official Azure AI documentation for the latest API patterns.
 """
 
 import os
 import sys
 from typing import Optional
 from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import AgentThread
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import AzureError
 
@@ -23,105 +27,124 @@ from azure.core.exceptions import AzureError
 class FoundryAgentClient:
     """Client for interacting with Microsoft Foundry agents."""
     
-    def __init__(self, endpoint: Optional[str] = None, credential=None):
+    def __init__(self, endpoint: Optional[str] = None, agent_id: Optional[str] = None, credential=None):
         """
         Initialize the Foundry agent client.
         
         Args:
             endpoint: The Foundry project endpoint URL
+            agent_id: The agent ID from Foundry portal
             credential: Azure credential object (defaults to DefaultAzureCredential)
         """
         self.endpoint = endpoint or os.getenv("AZURE_AI_PROJECT_ENDPOINT")
+        self.agent_id = agent_id or os.getenv("AZURE_AGENT_ID")
+        
         if not self.endpoint:
             raise ValueError("AZURE_AI_PROJECT_ENDPOINT must be set")
+        if not self.agent_id:
+            raise ValueError("AZURE_AGENT_ID must be set")
         
         self.credential = credential or DefaultAzureCredential()
         
         try:
             self.client = AIProjectClient(
-                endpoint=self.endpoint,
-                credential=self.credential
+                credential=self.credential,
+                endpoint=self.endpoint
             )
             print(f"✓ Connected to Foundry project: {self.endpoint}")
+            print(f"✓ Using agent ID: {self.agent_id}")
         except AzureError as e:
             print(f"✗ Failed to initialize client: {e}")
             raise
     
-    def send_message(self, message: str, conversation_id: Optional[str] = None) -> dict:
+    def send_message(self, message: str, thread_id: Optional[str] = None) -> dict:
         """
         Send a message to the Foundry agent.
         
         Args:
             message: The message text to send
-            conversation_id: Optional conversation ID for multi-turn conversations
+            thread_id: Optional thread ID for multi-turn conversations
             
         Returns:
-            dict: The agent's response
+            dict: The agent's response with thread_id and messages
         """
         try:
-            # Prepare the request
-            request_data = {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": message
-                    }
-                ]
-            }
+            # Create or use existing thread
+            if thread_id:
+                thread = AgentThread(id=thread_id)
+                print(f"→ Using existing thread: {thread_id}")
+            else:
+                thread = self.client.agents.create_thread()
+                print(f"→ Created new thread: {thread.id}")
             
-            if conversation_id:
-                request_data["conversation_id"] = conversation_id
-            
-            # Call the agent
-            print(f"\n→ Sending message: {message}")
-            response = self.client.agents.invoke(
-                deployment_name=os.getenv("AZURE_AI_MODEL_DEPLOYMENT_NAME"),
-                **request_data
+            # Add user message to thread
+            print(f"→ Sending message: {message}")
+            self.client.agents.create_message(
+                thread_id=thread.id,
+                role="user",
+                content=message
             )
             
-            print(f"✓ Received response")
-            return response
+            # Run the agent
+            run = self.client.agents.create_and_process_run(
+                thread_id=thread.id,
+                agent_id=self.agent_id
+            )
+            
+            print(f"✓ Agent run completed with status: {run.status}")
+            
+            # Get messages from the thread
+            messages = self.client.agents.list_messages(thread_id=thread.id)
+            
+            return {
+                "thread_id": thread.id,
+                "messages": [{"role": msg.role, "content": msg.content[0].text.value} 
+                            for msg in messages.data if hasattr(msg.content[0], 'text')],
+                "status": run.status
+            }
             
         except AzureError as e:
             print(f"✗ Error calling agent: {e}")
             raise
     
-    def send_message_stream(self, message: str, conversation_id: Optional[str] = None):
+    def send_message_stream(self, message: str, thread_id: Optional[str] = None):
         """
         Send a message to the Foundry agent with streaming response.
         
         Args:
             message: The message text to send
-            conversation_id: Optional conversation ID for multi-turn conversations
+            thread_id: Optional thread ID for multi-turn conversations
             
         Yields:
             Response chunks as they arrive
         """
         try:
-            # Prepare the request
-            request_data = {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": message
-                    }
-                ],
-                "stream": True
-            }
+            # Create or use existing thread
+            if thread_id:
+                thread = AgentThread(id=thread_id)
+            else:
+                thread = self.client.agents.create_thread()
             
-            if conversation_id:
-                request_data["conversation_id"] = conversation_id
-            
-            # Call the agent with streaming
+            # Add user message
             print(f"\n→ Sending message (streaming): {message}")
-            stream = self.client.agents.invoke(
-                deployment_name=os.getenv("AZURE_AI_MODEL_DEPLOYMENT_NAME"),
-                **request_data
+            self.client.agents.create_message(
+                thread_id=thread.id,
+                role="user",
+                content=message
             )
             
+            # Run with streaming
             print("✓ Streaming response:")
-            for chunk in stream:
-                yield chunk
+            with self.client.agents.create_stream(
+                thread_id=thread.id,
+                agent_id=self.agent_id
+            ) as stream:
+                for event in stream:
+                    # Yield text delta events
+                    if event.event == "thread.message.delta":
+                        for delta in event.data.delta.content:
+                            if hasattr(delta, 'text') and delta.text:
+                                yield delta.text.value
                 
         except AzureError as e:
             print(f"✗ Error calling agent: {e}")
@@ -206,7 +229,7 @@ def example_conversation():
             "I'm building a web application. What technology stack would you recommend?"
         )
         
-        conversation_id = response1.get("conversation_id")
+        thread_id = response1.get("thread_id")
         
         if response1 and "messages" in response1:
             for msg in response1["messages"]:
@@ -214,16 +237,17 @@ def example_conversation():
                     print(f"\nAgent Response 1:\n{msg.get('content', '')}")
         
         # Follow-up message with conversation context
-        if conversation_id:
+        if thread_id:
             response2 = client.send_message(
                 "What about for a mobile app instead?",
-                conversation_id=conversation_id
+                thread_id=thread_id
             )
             
             if response2 and "messages" in response2:
-                for msg in response2["messages"]:
-                    if msg.get("role") == "assistant":
-                        print(f"\nAgent Response 2:\n{msg.get('content', '')}")
+                # Get only the latest assistant message
+                assistant_messages = [msg for msg in response2["messages"] if msg.get("role") == "assistant"]
+                if assistant_messages:
+                    print(f"\nAgent Response 2:\n{assistant_messages[0].get('content', '')}")
         
         print("\n✓ Example completed successfully")
         
@@ -240,14 +264,15 @@ def main():
     print("=" * 60)
     
     # Check environment variables
-    required_vars = ["AZURE_AI_PROJECT_ENDPOINT", "AZURE_AI_MODEL_DEPLOYMENT_NAME"]
+    required_vars = ["AZURE_AI_PROJECT_ENDPOINT", "AZURE_AGENT_ID"]
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     
     if missing_vars:
         print(f"\n✗ Error: Missing required environment variables: {', '.join(missing_vars)}")
         print("\nPlease set the following environment variables:")
-        print("  AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com/api/projects/your-project")
-        print("  AZURE_AI_MODEL_DEPLOYMENT_NAME=your-deployment-name")
+        print("  AZURE_AI_PROJECT_ENDPOINT=https://your-project.services.ai.azure.com")
+        print("  AZURE_AGENT_ID=your-agent-id")
+        print("\nYou can find your agent ID in the Azure AI Foundry portal.")
         sys.exit(1)
     
     # Run examples
