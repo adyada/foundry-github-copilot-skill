@@ -20,39 +20,75 @@ The skill is defined in `.github/skills/foundry-agent/SKILL.md` following the Gi
 
 ### Prerequisites
 
-1. GitHub Copilot with Agent Skills support enabled
-2. A Microsoft Foundry Agent endpoint deployed and accessible
-3. API credentials (if required by your Foundry Agent)
+1. **GitHub Copilot** with Agent Skills support enabled
+2. **Python 3.8+** installed
+3. **Azure authentication** configured (Azure CLI, environment variables, or managed identity)
+4. **Microsoft Foundry Agent** endpoint deployed and accessible (optional - uses default if not configured)
 
 ### Installation
 
-1. Clone this repository
-2. Enable Agent Skills in VS Code:
+1. **Clone this repository**:
+   ```bash
+   git clone https://github.com/yourusername/foundry-github-copilot-skill.git
+   cd foundry-github-copilot-skill
    ```
-   Set "chat.useAgentSkills": true in your VS Code settings
+
+2. **Install Python dependencies**:
+   ```bash
+   pip install -r requirements.txt
    ```
-3. Configure environment variables:
-   - `FOUNDRY_AGENT_ENDPOINT`: Your Foundry Agent endpoint URL
-   - `FOUNDRY_AGENT_API_KEY`: Your API key (if authentication is required)
+
+3. **Set up Azure authentication** (choose one method):
+   - **Azure CLI** (recommended for development):
+     ```bash
+     az login
+     ```
+   - **Environment variables**:
+     ```bash
+     export AZURE_CLIENT_ID="your-client-id"
+     export AZURE_TENANT_ID="your-tenant-id"
+     export AZURE_CLIENT_SECRET="your-client-secret"
+     ```
+   - **VS Code**: Sign in with your Azure account
+
+4. **Configure Foundry Agent endpoint** (optional):
+   ```bash
+   export FOUNDRY_AGENT_ENDPOINT="https://your-endpoint.azure.com/api/..."
+   ```
+   If not set, the skill uses a default test endpoint.
 
 ### Usage
 
-Once installed and configured, GitHub Copilot will automatically detect when to use the Foundry Agent skill based on user prompts that require advanced AI capabilities.
+Once installed and configured, the Foundry Agent skill is automatically available in GitHub Copilot.
 
-Example interactions:
-- "Use the Foundry agent to analyze this data"
-- "Ask the Foundry agent about complex business logic"
-- "Query the Foundry agent for specialized domain knowledge"
+#### Invoking the Skill
+
+You can invoke the skill by mentioning "Foundry" or "Foundry agent" in your Copilot prompts:
+
+- "Use the Foundry agent to analyze this code"
+- "Ask the Foundry agent what's new in Microsoft Foundry"
+- "Query the Foundry agent about cloud architecture best practices"
+- "Call the Foundry agent to explain this algorithm"
+
+#### How It Works
+
+1. **You make a request** in GitHub Copilot mentioning the Foundry agent
+2. **Copilot detects the intent** and loads the `foundry-agent` skill
+3. **The skill authenticates** using Azure DefaultAzureCredential
+4. **Sends your prompt** to the configured Foundry Agent endpoint
+5. **Returns the response** from the Foundry Agent back to you in Copilot
 
 ## Skill Implementation
 
-The skill provides implementation examples in multiple languages:
+The skill is implemented as a GitHub Copilot Agent Skill located in `.github/skills/foundry-agent/SKILL.md`.
 
-- **Python**: Using the `requests` library
-- **TypeScript/JavaScript**: Using `axios`
-- **C#/.NET**: Using `HttpClient`
+### Key Features
 
-See `.github/skills/foundry-agent/SKILL.md` for complete code examples and documentation.
+- **Azure Authentication**: Uses `DefaultAzureCredential` for secure, passwordless authentication
+- **Configurable Endpoint**: Support for custom Foundry Agent endpoints via environment variable
+- **Error Handling**: Robust error handling with descriptive error messages
+- **Conversation Context**: Optional conversation ID parameter for multi-turn conversations
+- **Timeout Protection**: 120-second timeout to prevent hanging requests
 
 ## How It Works
 

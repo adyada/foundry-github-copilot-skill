@@ -36,7 +36,7 @@ class FoundryAgentClient:
         """
         self.endpoint = endpoint or os.getenv(
             "FOUNDRY_AGENT_ENDPOINT",
-            "https://e2e-tests-westus2-account.services.ai.azure.com/api/projects/e2e-tests-westus2/applications/test-adyada/protocols/openai/responses?api-version=2025-11-15-preview"
+            "https://bptest-eastus2-1.services.ai.azure.com/api/projects/test-project-1/applications/test-adyada-agent/protocols/openai/responses?api-version=2025-11-15-preview"
         )
         self.credential = credential or DefaultAzureCredential()
         self.scope = scope or self.DEFAULT_SCOPE
@@ -63,7 +63,7 @@ class FoundryAgentClient:
         self,
         prompt: str,
         conversation_id: Optional[str] = None,
-        timeout: int = 30
+        timeout: int = 120
     ) -> Dict[str, Any]:
         """
         Send a prompt to the Foundry Agent.

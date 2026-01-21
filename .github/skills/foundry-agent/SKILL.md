@@ -3,6 +3,23 @@ name: foundry-agent
 description: >
   Enables GitHub Copilot to send user prompts to a Microsoft Foundry Agent for advanced Q&A, 
   complex reasoning, or data processing tasks that require specialized AI capabilities.
+location: project
+tools:
+  - name: query_foundry_agent
+    description: >
+      Sends a user prompt to the Microsoft Foundry Agent endpoint for advanced AI processing.
+      Use this when the user explicitly requests Foundry agent capabilities or when complex 
+      reasoning beyond standard Copilot is needed.
+    parameters:
+      - name: prompt
+        description: The user's question or request to send to the Foundry Agent
+        type: string
+        required: true
+      - name: conversation_id
+        description: Optional conversation ID for maintaining context across multiple requests
+        type: string
+        required: false
+    implementation: python
 ---
 
 # Foundry Agent Skill
@@ -17,206 +34,121 @@ This skill allows GitHub Copilot to interact with a Microsoft Foundry Agent appl
 ## When to Use
 
 Use this skill when:
+- The user explicitly mentions "Foundry" or "Foundry agent"
 - The user's request requires advanced AI capabilities beyond standard Copilot functionality
 - Complex data analysis or processing is needed
 - Integration with Microsoft Foundry's specialized models is beneficial
 - The task involves multi-step reasoning or orchestration
 
-## Usage Instructions
+## Tool: query_foundry_agent
 
-When Copilot detects that a user's intent matches this skill's capabilities, it will:
-1. Extract the user's prompt or question
-2. Send a request to the Foundry Agent endpoint
-3. Process the response from the agent
-4. Return the result to the user in the Copilot chat
+Sends a prompt to the configured Microsoft Foundry Agent endpoint.
 
-## Implementation Examples
+### Parameters
+- **prompt** (required): The user's question or request
+- **conversation_id** (optional): Conversation ID for maintaining context
 
-### Python Example
+### Implementation
 
 ```python
-import requests
 import os
+import requests
+from azure.identity import DefaultAzureCredential
 
-def ask_foundry_agent(prompt: str) -> dict:
-    """
-    Send a prompt to the Microsoft Foundry Agent endpoint.
-    
-    Args:
-        prompt: The user's question or request
-        
-    Returns:
-        The agent's response as a dictionary
-    """
-    # Get the Foundry Agent endpoint from environment variables
-    endpoint = os.getenv("FOUNDRY_AGENT_ENDPOINT", "https://YOUR-FOUNDRY-ENDPOINT.azure.com/chat")
-    api_key = os.getenv("FOUNDRY_AGENT_API_KEY")
-    
-    headers = {
-        "Content-Type": "application/json",
-    }
-    
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-    
-    payload = {
-        "message": prompt,
-        "conversation_id": None  # Optional: for maintaining conversation context
-    }
-    
-    try:
-        response = requests.post(endpoint, json=payload, headers=headers, timeout=30)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        return {"error": f"Failed to call Foundry Agent: {str(e)}"}
+# Initialize Azure credential
+credential = DefaultAzureCredential()
 
-# Example usage
-if __name__ == "__main__":
-    user_prompt = "Analyze the latest sales data trends"
-    result = ask_foundry_agent(user_prompt)
-    print(result)
-```
+# Get endpoint from environment or use default
+endpoint = os.getenv(
+    "FOUNDRY_AGENT_ENDPOINT",
+    "https://bptest-eastus2-1.services.ai.azure.com/api/projects/test-project-1/applications/test-adyada-agent/protocols/openai/responses?api-version=2025-11-15-preview"
+)
 
-### TypeScript/JavaScript Example
+# Get access token
+token = credential.get_token("https://ai.azure.com/.default")
 
-```typescript
-import axios from 'axios';
-
-interface FoundryAgentRequest {
-  message: string;
-  conversation_id?: string;
+# Prepare request
+headers = {
+    "Content-Type": "application/json",
+    "Authorization": f"Bearer {token.token}"
 }
 
-interface FoundryAgentResponse {
-  response: string;
-  conversation_id?: string;
-  metadata?: any;
+payload = {
+    "input": prompt,
 }
 
-async function askFoundryAgent(prompt: string): Promise<FoundryAgentResponse | { error: string }> {
-  // Get the Foundry Agent endpoint from environment variables
-  const endpoint = process.env.FOUNDRY_AGENT_ENDPOINT || 'https://YOUR-FOUNDRY-ENDPOINT.azure.com/chat';
-  const apiKey = process.env.FOUNDRY_AGENT_API_KEY;
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  
-  if (apiKey) {
-    headers['Authorization'] = `Bearer ${apiKey}`;
-  }
-  
-  const payload: FoundryAgentRequest = {
-    message: prompt,
-    conversation_id: undefined, // Optional: for maintaining conversation context
-  };
-  
-  try {
-    const response = await axios.post<FoundryAgentResponse>(
-      endpoint,
-      payload,
-      { headers, timeout: 30000 }
-    );
-    return response.data;
-  } catch (error: any) {
-    return { error: `Failed to call Foundry Agent: ${error.message}` };
-  }
-}
+if conversation_id:
+    payload["previous_response_id"] = conversation_id
 
-// Example usage
-(async () => {
-  const userPrompt = 'Analyze the latest sales data trends';
-  const result = await askFoundryAgent(userPrompt);
-  console.log(result);
-})();
-```
-
-### C#/.NET Example
-
-```csharp
-using System;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-
-public class FoundryAgentClient
-{
-    private readonly HttpClient _httpClient;
-    private readonly string _endpoint;
-    private readonly string _apiKey;
-
-    public FoundryAgentClient()
-    {
-        _httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
-        _endpoint = Environment.GetEnvironmentVariable("FOUNDRY_AGENT_ENDPOINT") 
-            ?? "https://YOUR-FOUNDRY-ENDPOINT.azure.com/chat";
-        _apiKey = Environment.GetEnvironmentVariable("FOUNDRY_AGENT_API_KEY");
+# Send request to Foundry Agent
+try:
+    response = requests.post(endpoint, json=payload, headers=headers, timeout=120)
+    response.raise_for_status()
+    result = response.json()
+    
+    # Return the response
+    return result
+    
+except requests.exceptions.RequestException as e:
+    return {
+        "error": f"Failed to call Foundry Agent: {str(e)}",
+        "endpoint": endpoint
     }
-
-    public async Task<JsonDocument> AskFoundryAgentAsync(string prompt)
-    {
-        var payload = new
-        {
-            message = prompt,
-            conversation_id = (string)null
-        };
-
-        var content = new StringContent(
-            JsonSerializer.Serialize(payload),
-            Encoding.UTF8,
-            "application/json"
-        );
-
-        if (!string.IsNullOrEmpty(_apiKey))
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = 
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
-        }
-
-        try
-        {
-            var response = await _httpClient.PostAsync(_endpoint, content);
-            response.EnsureSuccessStatusCode();
-            
-            var responseBody = await response.Content.ReadAsStringAsync();
-            return JsonDocument.Parse(responseBody);
-        }
-        catch (Exception ex)
-        {
-            var errorJson = JsonSerializer.Serialize(new { error = $"Failed to call Foundry Agent: {ex.Message}" });
-            return JsonDocument.Parse(errorJson);
-        }
-    }
-
-    // Example usage
-    public static async Task Main(string[] args)
-    {
-        var client = new FoundryAgentClient();
-        var result = await client.AskFoundryAgentAsync("Analyze the latest sales data trends");
-        Console.WriteLine(result.RootElement.ToString());
-    }
-}
 ```
 
 ## Configuration
 
-To use this skill, you need to configure the following environment variables:
+To use this skill, you need to:
 
-- `FOUNDRY_AGENT_ENDPOINT`: The URL of your Microsoft Foundry Agent endpoint
-- `FOUNDRY_AGENT_API_KEY`: (Optional) The API key for authentication
+1. **Set up Azure authentication**: The skill uses `DefaultAzureCredential` which supports multiple authentication methods:
+   - Azure CLI: `az login`
+   - Environment variables: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_CLIENT_SECRET`
+   - Managed Identity (when running in Azure)
+   - Visual Studio Code Azure account
 
-## Testing
+2. **Configure the Foundry Agent endpoint** (optional):
+   - Set `FOUNDRY_AGENT_ENDPOINT` environment variable to your Foundry Agent URL
+   - If not set, uses the default endpoint shown in the implementation
 
-You can test the Foundry Agent integration by:
+3. **Install required Python packages**:
+   ```bash
+   pip install requests azure-identity
+   ```
 
-1. Setting up the environment variables with your Foundry Agent endpoint
-2. Running any of the example scripts above
-3. Verifying that the agent responds correctly to your prompts
+## Example Usage
+
+In GitHub Copilot, you can invoke this skill by asking:
+- "Use the Foundry agent to analyze this code"
+- "Ask the Foundry agent what's new in Foundry"
+- "Query the Foundry agent about cloud computing trends"
+
+## Response Format
+
+The Foundry Agent returns responses in the following format:
+```json
+{
+  "response": "Agent's response text",
+  "conversation_id": "optional-conversation-id",
+  "metadata": {
+    "model": "model-name",
+    "tokens": 150
+  }
+}
+```
+
+## Error Handling
+
+If the request fails, the skill returns an error object:
+```json
+{
+  "error": "Error description",
+  "endpoint": "The endpoint that was called"
+}
+```
 
 ## Additional Resources
 
 - [Microsoft Foundry Documentation](https://learn.microsoft.com/azure/ai-foundry/)
 - [GitHub Copilot Agent Skills Documentation](https://code.visualstudio.com/docs/copilot/customization/agent-skills)
+- [Azure Identity Library](https://learn.microsoft.com/python/api/azure-identity/)
 - [Foundry Agent Webapp Example](https://github.com/microsoft-foundry/foundry-agent-webapp)
