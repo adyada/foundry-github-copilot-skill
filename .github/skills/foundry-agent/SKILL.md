@@ -58,11 +58,11 @@ from azure.identity import DefaultAzureCredential
 # Initialize Azure credential
 credential = DefaultAzureCredential()
 
-# Get endpoint from environment or use default
-endpoint = os.getenv(
-    "FOUNDRY_AGENT_ENDPOINT",
-    "https://bptest-eastus2-1.services.ai.azure.com/api/projects/test-project-1/applications/test-adyada-agent/protocols/openai/responses?api-version=2025-11-15-preview"
-)
+# Get endpoint from environment (required)
+# Example: "https://<foundry-account-name>.services.ai.azure.com/api/projects/<project-name>/applications/<application-name>/protocols/openai/responses?api-version=2025-11-15-preview"
+endpoint = os.getenv("FOUNDRY_AGENT_APPLICATION_ENDPOINT")
+if not endpoint:
+    raise ValueError("FOUNDRY_AGENT_APPLICATION_ENDPOINT environment variable is required but not set")
 
 # Get access token
 token = credential.get_token("https://ai.azure.com/.default")
