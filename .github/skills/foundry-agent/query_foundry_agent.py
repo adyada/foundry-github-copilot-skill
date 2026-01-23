@@ -49,7 +49,7 @@ def query_foundry_agent(prompt: str, conversation_id: str = None):
             payload["previous_response_id"] = conversation_id
         
         # Send request to Foundry Agent
-        response = requests.post(endpoint, json=payload, headers=headers, timeout=120)
+        response = requests.post(endpoint, json=payload, headers=headers, timeout=30)
         response.raise_for_status()
         result = response.json()
         

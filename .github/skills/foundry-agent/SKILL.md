@@ -82,7 +82,7 @@ if conversation_id:
 
 # Send request to Foundry Agent
 try:
-    response = requests.post(endpoint, json=payload, headers=headers, timeout=120)
+    response = requests.post(endpoint, json=payload, headers=headers, timeout=30)
     response.raise_for_status()
     result = response.json()
     
