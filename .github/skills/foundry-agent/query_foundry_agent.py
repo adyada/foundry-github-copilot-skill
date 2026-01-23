@@ -7,6 +7,7 @@ Sends a prompt to Microsoft Foundry Agent for advanced AI processing.
 import os
 import sys
 import json
+import argparse
 import requests
 from azure.identity import DefaultAzureCredential
 
@@ -71,15 +72,15 @@ def query_foundry_agent(prompt: str, conversation_id: str = None):
 def main():
     """Main entry point for the tool when called by GitHub Copilot."""
     try:
-        # Read input parameters from stdin (JSON format)
-        input_data = json.loads(sys.stdin.read())
+        # Parse command-line arguments
+        parser = argparse.ArgumentParser(description="Query Microsoft Foundry Agent")
+        parser.add_argument("prompt", help="The user's question or request to send to the Foundry Agent")
+        parser.add_argument("--conversation_id", "-c", help="Optional conversation ID for maintaining context", default=None)
         
-        prompt = input_data.get("prompt")
-        conversation_id = input_data.get("conversation_id")
+        args = parser.parse_args()
         
-        if not prompt:
-            print(json.dumps({"error": "Missing required parameter: prompt"}))
-            sys.exit(1)
+        prompt = args.prompt
+        conversation_id = args.conversation_id
         
         # Call the Foundry Agent
         result = query_foundry_agent(prompt, conversation_id)
@@ -87,9 +88,6 @@ def main():
         # Output result as JSON
         print(json.dumps(result))
         
-    except json.JSONDecodeError as e:
-        print(json.dumps({"error": f"Invalid JSON input: {str(e)}"}))
-        sys.exit(1)
     except Exception as e:
         print(json.dumps({"error": f"Tool execution failed: {str(e)}"}))
         sys.exit(1)

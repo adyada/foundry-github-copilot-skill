@@ -48,54 +48,6 @@ Sends a prompt to the configured Microsoft Foundry Agent endpoint.
 - **prompt** (required): The user's question or request
 - **conversation_id** (optional): Conversation ID for maintaining context
 
-### Implementation
-
-```python
-import os
-import requests
-from azure.identity import DefaultAzureCredential
-
-# Initialize Azure credential
-credential = DefaultAzureCredential()
-
-# Get endpoint from environment (required)
-# Example: "https://<foundry-account-name>.services.ai.azure.com/api/projects/<project-name>/applications/<application-name>/protocols/openai/responses?api-version=2025-11-15-preview"
-endpoint = os.getenv("FOUNDRY_AGENT_APPLICATION_ENDPOINT")
-if not endpoint:
-    raise ValueError("FOUNDRY_AGENT_APPLICATION_ENDPOINT environment variable is required but not set")
-
-# Get access token
-token = credential.get_token("https://ai.azure.com/.default")
-
-# Prepare request
-headers = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {token.token}"
-}
-
-payload = {
-    "input": prompt,
-}
-
-if conversation_id:
-    payload["previous_response_id"] = conversation_id
-
-# Send request to Foundry Agent
-try:
-    response = requests.post(endpoint, json=payload, headers=headers, timeout=30)
-    response.raise_for_status()
-    result = response.json()
-    
-    # Return the response
-    return result
-    
-except requests.exceptions.RequestException as e:
-    return {
-        "error": f"Failed to call Foundry Agent: {str(e)}",
-        "endpoint": endpoint
-    }
-```
-
 ## Configuration
 
 To use this skill, you need to:
@@ -121,30 +73,6 @@ In GitHub Copilot, you can invoke this skill by asking:
 - "Use the Foundry agent to analyze this code"
 - "Ask the Foundry agent what's new in Foundry"
 - "Query the Foundry agent about cloud computing trends"
-
-## Response Format
-
-The Foundry Agent returns responses in the following format:
-```json
-{
-  "response": "Agent's response text",
-  "conversation_id": "optional-conversation-id",
-  "metadata": {
-    "model": "model-name",
-    "tokens": 150
-  }
-}
-```
-
-## Error Handling
-
-If the request fails, the skill returns an error object:
-```json
-{
-  "error": "Error description",
-  "endpoint": "The endpoint that was called"
-}
-```
 
 ## Additional Resources
 
