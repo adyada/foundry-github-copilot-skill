@@ -58,13 +58,12 @@ To use this skill, you need to:
    - Managed Identity (when running in Azure)
    - Visual Studio Code Azure account
 
-2. **Configure the Foundry Agent endpoint** (optional):
-   - Set `FOUNDRY_AGENT_ENDPOINT` environment variable to your Foundry Agent URL
-   - If not set, uses the default endpoint shown in the implementation
+2. **Configure the Foundry Agent endpoint**:
+   - Set `FOUNDRY_AGENT_APPLICATION_ENDPOINT` environment variable to your Foundry Agent URL
 
 3. **Install required Python packages**:
    ```bash
-   pip install requests azure-identity
+   pip install requests azure-identity python-dotenv
    ```
 
 ## Example Usage

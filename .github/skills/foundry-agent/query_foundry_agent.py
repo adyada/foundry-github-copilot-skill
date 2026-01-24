@@ -10,6 +10,10 @@ import json
 import argparse
 import requests
 from azure.identity import DefaultAzureCredential
+from dotenv import load_dotenv, find_dotenv
+
+# Load environment variables from .env file
+load_dotenv(find_dotenv())
 
 
 def query_foundry_agent(prompt: str, conversation_id: str = None):
