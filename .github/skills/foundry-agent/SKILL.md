@@ -1,81 +1,114 @@
 ---
 name: foundry-agent
-description: >
-  Enables GitHub Copilot to send user prompts to a Microsoft Foundry Agent for advanced Q&A, 
-  complex reasoning, or data processing tasks that require specialized AI capabilities.
-location: project
-tools:
-  - name: query_foundry_agent
-    description: >
-      Sends a user prompt to the Microsoft Foundry Agent endpoint for advanced AI processing.
-      Use this when the user explicitly requests Foundry agent capabilities or when complex 
-      reasoning beyond standard Copilot is needed.
-    parameters:
-      - name: prompt
-        description: The user's question or request to send to the Foundry Agent
-        type: string
-        required: true
-      - name: conversation_id
-        description: Optional conversation ID for maintaining context across multiple requests
-        type: string
-        required: false
-    implementation: python
+description: Enables GitHub Copilot to send user prompts to a Microsoft Foundry Agent for advanced Q&A,  complex reasoning, or data processing tasks that require specialized AI capabilities. USE THIS SKILL when the user explicitly mentions "Foundry", "Foundry agent", "ask Foundry", "query Foundry", or "use Foundry". Trigger phrases include "ask the Foundry agent", "use Foundry to", "query Foundry about", "Foundry agent", "send to Foundry", "have Foundry analyze", "let Foundry handle".
 ---
 
-# Foundry Agent Skill
+# Foundry Agent
 
-This skill allows GitHub Copilot to interact with a Microsoft Foundry Agent application for tasks that require:
-- Complex reasoning and analysis
-- Advanced natural language understanding
-- Specialized domain knowledge
-- Integration with external data sources
-- Custom AI workflows and processing
+This skill connects GitHub Copilot to a Microsoft Foundry Agent for tasks requiring advanced AI capabilities, complex reasoning, specialized domain knowledge, or integration with external data sources.
 
-## When to Use
+## CRITICAL: When to Use This Skill
 
-Use this skill when:
-- The user explicitly mentions "Foundry" or "Foundry agent"
-- The user's request requires advanced AI capabilities beyond standard Copilot functionality
-- Complex data analysis or processing is needed
-- Integration with Microsoft Foundry's specialized models is beneficial
-- The task involves multi-step reasoning or orchestration
+**USE Foundry Agent for specialized AI tasks.** If the request requires advanced reasoning or Foundry-specific capabilities, use this skill.
 
-## Tool: query_foundry_agent
+**ALWAYS use Foundry Agent when the user asks about:**
 
-Sends a prompt to the configured Microsoft Foundry Agent endpoint.
+| User Question Pattern | Example | Action |
+|-----------------------|---------|--------|
+| Explicit Foundry request | "Use the Foundry agent to analyze this" | `query_foundry_agent` |
+| Ask Foundry | "Ask Foundry about best practices" | `query_foundry_agent` |
+| Query Foundry | "Query Foundry about this architecture" | `query_foundry_agent` |
+| Send to Foundry | "Send this to Foundry for analysis" | `query_foundry_agent` |
+| Have Foundry analyze | "Have Foundry analyze this code" | `query_foundry_agent` |
+| Foundry agent tasks | "Let the Foundry agent handle this" | `query_foundry_agent` |
 
-### Parameters
-- **prompt** (required): The user's question or request
-- **conversation_id** (optional): Conversation ID for maintaining context
+**When in doubt about complex AI tasks, use Foundry Agent.** It provides advanced capabilities beyond standard Copilot.
 
 ## Configuration
 
-To use this skill, you need to:
+Authentication uses `DefaultAzureCredential` which supports Azure CLI (`az login`), environment variables, Managed Identity, or VS Code Azure account. Set `FOUNDRY_AGENT_APPLICATION_ENDPOINT` environment variable to your Foundry Agent URL.
 
-1. **Set up Azure authentication**: The skill uses `DefaultAzureCredential` which supports multiple authentication methods:
-   - Azure CLI: `az login`
-   - Environment variables: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_CLIENT_SECRET`
-   - Managed Identity (when running in Azure)
-   - Visual Studio Code Azure account
+## MCP Tool
 
-2. **Configure the Foundry Agent endpoint**:
-   - Set `FOUNDRY_AGENT_APPLICATION_ENDPOINT` environment variable to your Foundry Agent URL
+Use the `query_foundry_agent` MCP tool to send prompts to the Foundry Agent. The tool accepts a `prompt` parameter and optional `conversation_id`.
 
-3. **Install required Python packages**:
-   ```bash
-   pip install requests azure-identity python-dotenv
-   ```
+| Tool | Parameters |
+|------|------------|
+| `query_foundry_agent` | `{ "prompt": "<your question>", "conversation_id": "<optional>" }` |
 
-## Example Usage
+## Quick Start
 
-In GitHub Copilot, you can invoke this skill by asking:
-- "Use the Foundry agent to analyze this code"
-- "Ask the Foundry agent what's new in Foundry"
-- "Query the Foundry agent about cloud computing trends"
+Query the Foundry Agent using the MCP tool:
 
-## Additional Resources
+| Tool | Parameters |
+|------|------------|
+| `query_foundry_agent` | `{ "prompt": "What's new in Microsoft Foundry?" }` |
 
-- [Microsoft Foundry Documentation](https://learn.microsoft.com/azure/ai-foundry/)
-- [GitHub Copilot Agent Skills Documentation](https://code.visualstudio.com/docs/copilot/customization/agent-skills)
-- [Azure Identity Library](https://learn.microsoft.com/python/api/azure-identity/)
-- [Foundry Agent Webapp Example](https://github.com/microsoft-foundry/foundry-agent-webapp)
+## Common Use Cases
+
+### Code Analysis and Review
+
+| Tool | Parameters |
+|------|------------|
+| `query_foundry_agent` | `{ "prompt": "Analyze this code for potential improvements" }` |
+| `query_foundry_agent` | `{ "prompt": "Review the architecture of this system" }` |
+| `query_foundry_agent` | `{ "prompt": "Identify security concerns in this implementation" }` |
+
+**User prompts that trigger these:**
+- "Ask Foundry to analyze this code for improvements"
+- "Have Foundry review the architecture"
+- "Use Foundry to identify security concerns"
+
+### Advanced Q&A
+
+| Tool | Parameters |
+|------|------------|
+| `query_foundry_agent` | `{ "prompt": "Explain the benefits of microservices architecture" }` |
+| `query_foundry_agent` | `{ "prompt": "What are best practices for Azure deployments?" }` |
+| `query_foundry_agent` | `{ "prompt": "Compare different caching strategies" }` |
+
+**User prompts that trigger these:**
+- "Ask the Foundry agent about microservices benefits"
+- "Query Foundry about Azure deployment best practices"
+- "Have Foundry compare caching strategies"
+
+### Data Processing
+
+| Tool | Parameters |
+|------|------------|
+| `query_foundry_agent` | `{ "prompt": "Summarize the key findings from this data" }` |
+| `query_foundry_agent` | `{ "prompt": "Analyze trends in this dataset" }` |
+| `query_foundry_agent` | `{ "prompt": "Extract insights from these logs" }` |
+
+**User prompts that trigger these:**
+- "Send this data to Foundry to summarize"
+- "Use Foundry to analyze trends in this dataset"
+- "Ask Foundry to extract insights from these logs"
+
+### Multi-turn Conversations
+
+| Tool | Parameters |
+|------|------------|
+| `query_foundry_agent` | `{ "prompt": "Let's discuss system design", "conversation_id": "design-session-1" }` |
+| `query_foundry_agent` | `{ "prompt": "Now let's focus on scalability", "conversation_id": "design-session-1" }` |
+
+**User prompts that trigger these:**
+- "Ask Foundry to help me with system design"
+- "Continue the Foundry conversation about scalability"
+
+## MCP Tool Reference
+
+### query_foundry_agent
+
+Sends a prompt to the configured Microsoft Foundry Agent endpoint for advanced AI processing.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `prompt` | string | Yes | The user's question or request to send to the Foundry Agent |
+| `conversation_id` | string | No | Conversation ID for maintaining context across multiple requests |
+
+**Example:**
+
+| Tool | Parameters |
+|------|------------|
+| `query_foundry_agent` | `{ "prompt": "Analyze this code for potential improvements" }` |
