@@ -8,8 +8,36 @@ import os
 import sys
 import json
 import argparse
+import subprocess
+
+
+def ensure_dependencies():
+    """Install missing dependencies automatically."""
+    required = ["requests", "azure-identity", "python-dotenv"]
+    try:
+        import requests
+        from azure.identity import DefaultAzureCredential
+        from dotenv import load_dotenv
+    except ImportError:
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet"] + required)
+        except subprocess.CalledProcessError:
+            # pip failed, try ensurepip first
+            try:
+                subprocess.check_call([sys.executable, "-m", "ensurepip", "--default-pip"])
+                subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet"] + required)
+            except subprocess.CalledProcessError:
+                print(json.dumps({
+                    "error": "Failed to install dependencies. Please install pip and run: pip install requests azure-identity python-dotenv"
+                }))
+                sys.exit(1)
+
+
+ensure_dependencies()
+
 import requests
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, AzureCliCredential
+from azure.core.exceptions import ClientAuthenticationError
 from dotenv import load_dotenv, find_dotenv
 
 # Load environment variables from .env file
@@ -66,6 +94,31 @@ def query_foundry_agent(prompt: str, conversation_id: str = None):
             "error": f"Failed to call Foundry Agent: {str(e)}",
             "endpoint": endpoint
         }
+    except ClientAuthenticationError:
+        # Attempt to run az login for the user
+        try:
+            subprocess.run(["az", "login"], check=True)
+            # Retry with fresh credentials
+            credential = AzureCliCredential()
+            token = credential.get_token("https://ai.azure.com/.default")
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {token.token}"
+            }
+            payload = {"input": prompt}
+            if conversation_id:
+                payload["previous_response_id"] = conversation_id
+            response = requests.post(endpoint, json=payload, headers=headers, timeout=30)
+            response.raise_for_status()
+            return response.json()
+        except subprocess.CalledProcessError:
+            return {
+                "error": "Azure login failed. Please run 'az login' manually.",
+            }
+        except Exception as e:
+            return {
+                "error": f"Authentication retry failed: {str(e)}",
+            }
     except Exception as e:
         return {
             "error": f"Unexpected error: {str(e)}",
